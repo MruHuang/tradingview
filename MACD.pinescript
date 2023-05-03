@@ -1,0 +1,43 @@
+//@version =2
+
+//TD賣出	
+study("TD Sequential",overlay=true)
+transp=input(0)
+Numbers=input(true)
+SR=input(true)
+Barcolor=input(true)
+TD = close > close[4] ?nz(TD[1])+1:0
+TS = close < close[4] ?nz(TS[1])+1:0
+
+TDUp = TD - valuewhen(TD < TD[1], TD , 1 )
+TDDn = TS - valuewhen(TS < TS[1], TS , 1 )
+
+
+plotshape(Numbers?(TDUp==7?true:na):na,style=shape.triangledown,text="7",color=green,location=location.abovebar,transp=transp)
+plotshape(Numbers?(TDUp==8?true:na):na,style=shape.triangledown,text="8",color=green,location=location.abovebar,transp=transp)
+plotshape(Numbers?(TDUp==9?true:na):na,style=shape.triangledown,text="9",color=green,location=location.abovebar,transp=transp)
+
+
+if (TDUp==9)
+	strategy.entry("賣", strategy.short, comment="策略賣出")
+if (TDDn==9)
+	strategy.entry("買", strategy.long, comment="策略買")
+
+plot(SR?(TDbuyh ? TDbuyl: na):na,style=circles, linewidth=1, color=red)
+plot(SR?(TDselll ? TDsellh : na):na,style=circles, linewidth=1, color=lime)
+barcolor(Barcolor?(sell? #FF0000 : buy? #00FF00 : sellovershoot? #FF66A3 : sellovershoot1? #FF3385 : sellovershoot2? #FF0066 : sellovershoot3? #CC0052 : buyovershoot? #D6FF5C : buyovershoot1? #D1FF47 : buyovershoot2? #B8E62E : buyovershoot3? #8FB224 : na):na)
+
+
+strategy("MACD Strategy", overlay=true)
+//MACD買進
+fastLength = input(12)
+slowlength = input(26)
+MACDLength = input(9)
+MACD = ta.ema(close, fastLength) - ta.ema(close, slowlength)
+aMACD = ta.ema(MACD, MACDLength)
+delta = MACD - aMACD
+if (ta.crossover(delta, 0))
+	strategy.entry("買", strategy.long, comment="策略買進")
+//if (ta.crossunder(delta, 0))
+//	strategy.entry("賣", strategy.short, comment="策略賣出")
+plot(strategy.equity, title="equity", color=color.red, linewidth=2, style=plot.style_areabr)

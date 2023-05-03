@@ -1,0 +1,114 @@
+//@version=5
+strategy(title='TD-KDJ Strategy')
+
+// 定義 KDJ 指標的參數
+len = input.int(14, minval=1, title='KDJ Length')
+smooth_k = input.int(3, minval=1, title='K Line Smoothing')
+smooth_d = input.int(3, minval=1, title='D Line Smoothing')
+upLine = input(20, title="Overbought Line")
+dnLine = input(80, title="Oversold Line")
+
+// 計算 KDJ 指標
+h = ta.highest(len)
+l = ta.lowest(len)
+rsv = (close - l) / (h - l) * 100
+k = ta.sma(rsv, smooth_k)
+d = ta.sma(k, smooth_d)
+j = 3 * k - 2 * d
+
+// 定義買入和賣出訊號
+buy_signal = ta.crossover(k, d) and k < upLine
+sell_signal = ta.crossunder(k, d) and k > dnLine
+
+plotshape((buy_signal),style=shape.triangleup,text="黃金",textcolor=color.yellow,color=color.yellow,location=location.belowbar)
+
+// 繪製 KDJ 指標的線條
+//plot(k, color=color.blue, title="K")
+//plot(d, color=color.red, title="D")
+//plot(j, color=color.orange, title="J")
+
+//TD序列
+
+
+
+// 計算 TD 序列
+td_setup(buy, sell) =>
+    // 定義 TD 序列的變量
+    var td_buy = 0
+    var td_sell = 0
+    var td_sell_setup = 0
+    var td_buy_setup = 0
+    if buy
+        td_buy_setup := bar_index
+    if sell
+        td_sell_setup := bar_index
+    if td_buy_setup > td_sell_setup
+        td_sell := 0
+        td_buy := td_buy_setup - bar_index + 1
+    else if td_sell_setup > td_buy_setup
+        td_buy := 0
+        td_sell := td_sell_setup - bar_index + 1
+    else
+        td_buy := 0
+        td_sell := 0
+    [td_buy, td_sell]
+
+[td_buy, td_sell] = td_setup(low < low[4] and high < high[4], high > high[4] and low > low[4])
+
+
+
+
+//TD 序列SEQ//
+var int TD = na
+var int TS = na
+TD := close > close[4] ? nz(TD[1])+1 : 0
+TS := close < close[4] ? nz(TS[1])+1 : 0
+TDUp = TD - ta.valuewhen(TD < TD[1], TD , 1 )
+TDDn = TS - ta.valuewhen(TS < TS[1], TS , 1 )
+//TD SEQ//
+
+
+Numbers = input(true)
+transp = input(0)
+
+plotshape(Numbers?(TDUp==7?true:na):na,style=shape.triangledown,text="7",color=color.green,location=location.abovebar)
+plotshape(Numbers?(TDUp==8?true:na):na,style=shape.triangledown,text="8",color=color.green,location=location.abovebar)
+plotshape(Numbers?(TDUp==9?true:na):na,style=shape.triangledown,text="9",color=color.green,location=location.abovebar)
+plotshape(Numbers?(TDDn==7?true:na):na,style=shape.triangleup,text="7",color=color.red,location=location.belowbar)
+plotshape(Numbers?(TDDn==8?true:na):na,style=shape.triangleup,text="8",color=color.red,location=location.belowbar)
+plotshape(Numbers?(TDDn==9?true:na):na,style=shape.triangleup,text="9",color=color.red,location=location.belowbar)
+
+
+
+
+//MACD
+fastLength = input(12)
+slowlength = input(26)
+MACDLength = input(9)
+MACD = ta.ema(close, fastLength) - ta.ema(close, slowlength)
+aMACD = ta.ema(MACD, MACDLength)
+delta = MACD - aMACD
+
+
+if TDUp>=9
+    strategy.entry('TD-賣', strategy.short)
+if sell_signal
+    strategy.entry('KDJ-賣', strategy.short)
+if ta.crossunder(delta, 0)
+    strategy.entry('MACD-賣', strategy.short)
+
+// 進行買入和賣出
+if buy_signal
+    strategy.entry('KDJ-買', strategy.long)
+
+if td_sell >= 7
+    strategy.entry('TD遞迴-賣', strategy.short)
+
+// 進行買入和賣出
+if td_buy >= 7
+    strategy.entry('TD遞迴-買', strategy.long)
+
+
+
+
+
